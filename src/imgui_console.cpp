@@ -79,14 +79,14 @@ void ImGuiConsole::Draw()
     ///////////////////////////////////////////////////////////////////////////
 
     // Begin Console Window.
-    ImGui::PushStyleVar(ImGuiStyleVar_Alpha, m_WindowAlpha);
+    /*ImGui::PushStyleVar(ImGuiStyleVar_Alpha, m_WindowAlpha);
     if (!ImGui::Begin(m_ConsoleName.data(), nullptr, ImGuiWindowFlags_MenuBar))
     {
         ImGui::PopStyleVar();
         ImGui::End();
         return;
     }
-    ImGui::PopStyleVar();
+    ImGui::PopStyleVar();*/
 
     ///////////////
     // Menu bar  //
@@ -113,7 +113,7 @@ void ImGuiConsole::Draw()
 
     InputBar();
 
-    ImGui::End();
+    //ImGui::End();
 }
 
 csys::System &ImGuiConsole::System()
@@ -254,7 +254,7 @@ void ImGuiConsole::LogWindow()
         ImGui::PopTextWrapPos();
 
         // Auto-scroll logs.
-        if ((m_ScrollToBottom && (ImGui::GetScrollY() >= ImGui::GetScrollMaxY() || m_AutoScroll)))
+        if ((m_ScrollToBottom || (ImGui::GetScrollY() >= ImGui::GetScrollMaxY() && m_AutoScroll)))
             ImGui::SetScrollHereY(1.0f);
         m_ScrollToBottom = false;
 
@@ -623,6 +623,9 @@ void ImGuiConsole::SettingsHandler_WriteAll(ImGuiContext *ctx, ImGuiSettingsHand
 
     // Get console.
     auto console = static_cast<ImGuiConsole *>(handler->UserData);
+    if (!console) {
+        return;
+    }
 
 #define INI_CONSOLE_SAVE_COLOR(type) buf->appendf(#type"=%i,%i,%i,%i\n", (int)(console->m_ColorPalette[type].x * 255),\
                                                                          (int)(console->m_ColorPalette[type].y * 255),\

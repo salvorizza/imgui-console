@@ -43,3 +43,6 @@ Thumbs.db
 /cmake-build-relwithdebinfo/
 /cmake-build-minsizerel/
 /.idea/
+
+bin/
+bin-int/
