@@ -74,20 +74,6 @@ ImGuiConsole::ImGuiConsole(std::string c_name, size_t inputBufferSize) : m_Conso
 
 void ImGuiConsole::Draw()
 {
-    ///////////////////////////////////////////////////////////////////////////
-    // Window and Settings ////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-
-    // Begin Console Window.
-    /*ImGui::PushStyleVar(ImGuiStyleVar_Alpha, m_WindowAlpha);
-    if (!ImGui::Begin(m_ConsoleName.data(), nullptr, ImGuiWindowFlags_MenuBar))
-    {
-        ImGui::PopStyleVar();
-        ImGui::End();
-        return;
-    }
-    ImGui::PopStyleVar();*/
-
     ///////////////
     // Menu bar  //
     ///////////////
@@ -112,8 +98,6 @@ void ImGuiConsole::Draw()
     ///////////////////////////////////////////////////////////////////////////
 
     InputBar();
-
-    //ImGui::End();
 }
 
 csys::System &ImGuiConsole::System()
@@ -200,61 +184,76 @@ void ImGuiConsole::LogWindow()
     {
         // Display colored command output.
         static const float timestamp_width = ImGui::CalcTextSize("00:00:00:0000").x;    // Timestamp.
-        int count = 0;                                                                       // Item count.
+        int count = 0; // Item count.
+
+        auto& items = m_ConsoleSystem.Items();
+
+
+
+        ImGuiListClipper clipper;
+        clipper.Begin(items.size());
 
         // Wrap items.
-        ImGui::PushTextWrapPos();
+        //ImGui::PushTextWrapPos();
 
-        // Display items.
-        for (const auto &item : m_ConsoleSystem.Items())
-        {
-            // Exit if word is filtered.
-            if (!m_TextFilter.PassFilter(item.Get().c_str()))
-                continue;
-
-            // Spacing between commands.
-            if (item.m_Type == csys::COMMAND)
+        while (clipper.Step()) {
+            // Display items.
+            for (int i=clipper.DisplayStart;i<clipper.DisplayEnd;i++)
             {
-                if (m_TimeStamps) ImGui::PushTextWrapPos(ImGui::GetColumnWidth() - timestamp_width);    // Wrap before timestamps start.
-                if (count++ != 0) ImGui::Dummy(ImVec2(-1, ImGui::GetFontSize()));                            // No space for the first command.
-            }
+                auto& item = items[i];
 
-            // Items.
-            if (m_ColoredOutput)
-            {
-                ImGui::PushStyleColor(ImGuiCol_Text, m_ColorPalette[item.m_Type]);
-                ImGui::TextUnformatted(item.Get().data());
-                ImGui::PopStyleColor();
-            }
-            else
-            {
-                ImGui::TextUnformatted(item.Get().data());
-            }
+                // Exit if word is filtered.
+                if (!m_TextFilter.PassFilter(item.Get().c_str()))
+                    continue;
+
+               // if (m_TimeStamps) ImGui::PushTextWrapPos(ImGui::GetColumnWidth() - timestamp_width);    // Wrap before timestamps start.
+
+                // Spacing between commands.
+                if (item.m_Type == csys::COMMAND)
+                {
+                    if (count++ != 0) ImGui::Dummy(ImVec2(-1, ImGui::GetFontSize()));                            // No space for the first command.
+                }
+
+                // Items.
+                if (m_ColoredOutput)
+                {
+                    ImGui::PushStyleColor(ImGuiCol_Text, m_ColorPalette[item.m_Type]);
+                    ImGui::TextUnformatted(item.Get().data());
+                    ImGui::PopStyleColor();
+                }
+                else
+                {
+                    ImGui::TextUnformatted(item.Get().data());
+                }
 
 
-            // Time stamp.
-            if (item.m_Type == csys::COMMAND && m_TimeStamps)
-            {
-                // No wrap for timestamps
-                ImGui::PopTextWrapPos();
+                // Time stamp.
+                if (m_TimeStamps)
+                {
+                    // No wrap for timestamps
+                   // ImGui::PopTextWrapPos();
 
-                // Right align.
-                ImGui::SameLine(ImGui::GetColumnWidth(-1) - timestamp_width);
+                    // Right align.
+                    ImGui::SameLine(ImGui::GetColumnWidth(-1) - timestamp_width);
 
-                // Draw time stamp.
-                ImGui::PushStyleColor(ImGuiCol_Text, m_ColorPalette[COL_TIMESTAMP]);
-                ImGui::Text("%02d:%02d:%02d:%04d", ((item.m_TimeStamp / 1000 / 3600) % 24), ((item.m_TimeStamp / 1000 / 60) % 60),
-                            ((item.m_TimeStamp / 1000) % 60), item.m_TimeStamp % 1000);
-                ImGui::PopStyleColor();
+                    // Draw time stamp.
+                    ImGui::PushStyleColor(ImGuiCol_Text, m_ColorPalette[COL_TIMESTAMP]);
+                    ImGui::Text("%02d:%02d:%02d:%04d", ((item.m_TimeStamp / 1000 / 3600) % 24), ((item.m_TimeStamp / 1000 / 60) % 60),
+                        ((item.m_TimeStamp / 1000) % 60), item.m_TimeStamp % 1000);
+                    ImGui::PopStyleColor();
 
+                }
             }
         }
 
         // Stop wrapping since we are done displaying console items.
-        ImGui::PopTextWrapPos();
+        //ImGui::PopTextWrapPos();
+
+        clipper.End();
+
 
         // Auto-scroll logs.
-        if ((m_ScrollToBottom || (ImGui::GetScrollY() >= ImGui::GetScrollMaxY() && m_AutoScroll)))
+        if (ImGui::GetScrollY() < ImGui::GetScrollMaxY() && m_AutoScroll)
             ImGui::SetScrollHereY(1.0f);
         m_ScrollToBottom = false;
 
